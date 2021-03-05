@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import net.daum.mf.map.api.MapLayout
 import net.daum.mf.map.api.MapView
 
 
