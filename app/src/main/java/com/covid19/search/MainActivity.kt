@@ -15,7 +15,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.gson.JsonParser
 import kotlinx.android.synthetic.main.activity_main.*
 import net.daum.mf.map.api.MapPOIItem
 import net.daum.mf.map.api.MapPoint
@@ -63,6 +62,8 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         mapView = MapView(this)
         mapView.setOpenAPIKeyAuthenticationResultListener(this)
         mapView.currentLocationTrackingMode = MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading
+        mapView.setZoomLevel(11, true)
+//        mapView.setCalloutBalloonAdapter(CustomCalloutBalloonAdapter(this))
         map_view.addView(mapView)
         //그렇다면 이제 다음에 무엇을 해야하지? 일단 현재 위치가 지도에 뜨는것은 확인했다. 다음에 할 것은
         // 현재 나의 위치에 따라서 지도 중심점이 움직이도록 설정하는 것이다. - 성공!
@@ -80,43 +81,8 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         //    하지만 단점이 있다. 데이터를 추가적으로 넣을 시, 한번에 다 가져오고 갱신해야만 한다.
         //    하지만 아니면 키값에 인덱싱을 줘서 한다면?
         // 2. sqllite를 이용해 가져온다.
-        //
 
-        val marker1 = MapPOIItem()
-        marker1.itemName = "Default Marker"
-        marker1.tag = 0
-        marker1.mapPoint = MapPoint.mapPointWithGeoCoord(37.535482, 127.132218)
-        marker1.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker1.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker1)
-
-        val marker2 = MapPOIItem()
-        marker2.itemName = "Default Marker"
-        marker2.tag = 0
-        marker2.mapPoint = MapPoint.mapPointWithGeoCoord(37.535386, 127.132655)
-        marker2.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker2.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker2)
-
-        val marker3 = MapPOIItem()
-        marker3.itemName = "Default Marker"
-        marker3.tag = 0
-        marker3.mapPoint = MapPoint.mapPointWithGeoCoord(37.536015, 127.132571)
-        marker3.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker3.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker3)
-
-        val marker4 = MapPOIItem()
-        marker4.itemName = "Default Marker"
-        marker4.tag = 0
-        marker4.mapPoint = MapPoint.mapPointWithGeoCoord(37.536303, 127.131634)
-        marker4.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker4.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker4)
+        // 이제 처음 시작할 때 zoom out한 상태로 시작해야한다.
 
         val prefs: SharedPreferences = getSharedPreferences("COVID19INFO_LIST", Context.MODE_PRIVATE)
         val pref_result = prefs.getString("covid19info_list", null)
@@ -144,8 +110,8 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
                 var marker = MapPOIItem()
                 marker.itemName = obj.get("centerName").toString()
-                marker.tag = 0 // TODO 추후 무슨뜻인지 알아낼
-                marker.mapPoint = MapPoint.mapPointWithGeoCoord(obj.get("lat").toString().toDouble(), obj.get("lng").toString().toDouble())
+                marker.tag = 0 // TODO 추후 무슨뜻인지 알아낼것
+                marker.mapPoint = MapPoint.mapPointWithGeoCoord(obj.get("lng").toString().toDouble(), obj.get("lat").toString().toDouble())
                 marker.markerType = MapPOIItem.MarkerType.BluePin
                 marker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
                 markerList.add(marker)
