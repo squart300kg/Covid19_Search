@@ -3,20 +3,28 @@ package com.covid19.search
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.gson.JsonParser
 import kotlinx.android.synthetic.main.activity_main.*
 import net.daum.mf.map.api.MapPOIItem
 import net.daum.mf.map.api.MapPoint
 import net.daum.mf.map.api.MapView
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 
 
 class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResultListener, MapView.CurrentLocationEventListener {
@@ -34,6 +42,12 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     private var currentLocation: String? = null
     private var address: String? = null
     private var distance: Double? = null
+
+    // LG Gram 키해시 : /2q855oUoLt8Gt5SURw/Zeo4H8M=
+    // Mac 키해시 : S4hP67qeLpxOpFdOvSnjeDaJawc=
+
+    // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것
+    // TODO 2. 프로가드 적용할 것
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,10 +71,17 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         // 주변에 복수개로 마커가 찍힐 수 있도록 구현하자!
         // 단순히 마커 객체를 여러개를 만들면 됨- 성공!
 
-        // 그 다음엔 뭘하지? RESTFULAPI를 연동해서 값을 받아오기!
+        // 그 다음엔 뭘하지? RESTFULAPI를 연동해서 값을 받아오기! - 성공
+        // 그 이전엔 어떻게 해야할까? 우선, 스플레시 이미지를 띄울때부터 rest api통신을 시작한다. 그러므로 스플래시 이미지를 먼저 넣어야 할것이다 - 성공!
 
+        // api통신에 성공했다. 받아온 녀석들의 위도와 경도를 이용해 마커를 찍자
+        // 그렇다면 splash에서 받아온 값을 메인액티비티로 가져와야 하는데.... 어떻게 가져오지?
+        // 1. sharedPreference를 이용해 가져온다
+        //    하지만 단점이 있다. 데이터를 추가적으로 넣을 시, 한번에 다 가져오고 갱신해야만 한다.
+        //    하지만 아니면 키값에 인덱싱을 줘서 한다면?
+        // 2. sqllite를 이용해 가져온다.
+        //
 
-        var markers = arrayOf("sdf", "sdf")
         val marker1 = MapPOIItem()
         marker1.itemName = "Default Marker"
         marker1.tag = 0
@@ -97,8 +118,55 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
             MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
         mapView.addPOIItem(marker4)
 
+        val prefs: SharedPreferences = getSharedPreferences("COVID19INFO_LIST", Context.MODE_PRIVATE)
+        val pref_result = prefs.getString("covid19info_list", null)
+
+        Log.i(TAG + "pref", pref_result.toString())
+
+        try {
+
+            var jsonArray = JSONArray(pref_result)
+//            var marker = arrayListOf<MapPOIItem>(jsonArray.length())
+            var markerList = ArrayList<MapPOIItem>()
+//            var marker[3] = MapPOIItem()
+            for (i in 0 until jsonArray.length()) {
+                var obj = jsonArray.getJSONObject(i)
+                Log.i("jsonTest[$i]", obj.get("centerName").toString())
+                Log.i("jsonTest[$i]", obj.get("address").toString())
+                Log.i("jsonTest[$i]", obj.get("centerType").toString())
+                Log.i("jsonTest[$i]", obj.get("facilityName").toString())
+                Log.i("jsonTest[$i]", obj.get("lat").toString())
+                Log.i("jsonTest[$i]", obj.get("lng").toString())
+                Log.i("jsonTest[$i]", obj.get("org").toString())
+                Log.i("jsonTest[$i]", obj.get("sido").toString())
+                Log.i("jsonTest[$i]", obj.get("sigungu").toString())
+//                Log.i("jsonTest[$i]", obj.get("zipCode").toString())
+
+                var marker = MapPOIItem()
+                marker.itemName = obj.get("centerName").toString()
+                marker.tag = 0 // TODO 추후 무슨뜻인지 알아낼
+                marker.mapPoint = MapPoint.mapPointWithGeoCoord(obj.get("lat").toString().toDouble(), obj.get("lng").toString().toDouble())
+                marker.markerType = MapPOIItem.MarkerType.BluePin
+                marker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
+                markerList.add(marker)
+
+                mapView.addPOIItem(markerList[i])
+            }
+
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+
+
+
     }
 
+    // 다음과 같이 자료구조를 재정리하는 메소드
+    // string(HashMap(), HashMap(), HashMap() ... ) => List(HashMap(), HashMap(), HashMap(), ...)
+    private fun stringToWords(s: String) = s.trim().splitToSequence('[')
+        .filter() {it.isNotEmpty() }
+        .toList()
 
     private fun checkRunTimePermission() {
         //런타임 퍼미션 처리

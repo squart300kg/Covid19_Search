@@ -13,16 +13,21 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true" >
-
-        <activity android:name="com.covid19.search.MainActivity">
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".SplashActivity"
+            android:screenOrientation = "portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <meta-data android:name="com.kakao.sdk.AppKey" android:value="b95c2562da6323c06a0b63fe1db8469e"/>
+        <activity android:name=".MainActivity"/>
+
+        <meta-data
+            android:name="com.kakao.sdk.AppKey"
+            android:value="b95c2562da6323c06a0b63fe1db8469e" />
     </application>
 
 </manifest>
