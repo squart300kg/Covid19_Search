@@ -31,11 +31,11 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     private val TAG = "MainActivity"
     private val REQUEST_CODE_LOCATION: Int = 2
     private lateinit var mapView: MapView
-    private val geocoder = Geocoder(application, Locale.getDefault())
+    private val geocoder = Geocoder(this, Locale.getDefault())
 
     private lateinit var locationManager: LocationManager
-    private var latitude: Double? = null
-    private var longtitude: Double? = null
+    private var latitude: Double? = 37.537229
+    private var longtitude: Double? = 127.005515
     private var currentLocation: String? = null
     private var address: String? = null
     private var distance: Double? = null
