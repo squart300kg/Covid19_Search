@@ -27,7 +27,7 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-        // TODO 스플래시이미지 정하기
+
         Glide.with(this).load(R.raw.splash_image_large).into(DrawableImageViewTarget(splash_image))
 
         getCovidInfo()
@@ -76,6 +76,7 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun saveCovid19Info(body: Covid19InfoResponse) {
+
         val covid19InfoList = ArrayList<JSONObject>()
 
         for (covid19Info in body.data) {
@@ -99,6 +100,7 @@ class SplashActivity : AppCompatActivity() {
             prefs.edit().putString(COVID19INFO_LIST, covid19InfoList.toString()).apply()
 
         }
+
     }
 
     private val onFailGetCovid19Info = { it: Throwable? ->
@@ -108,11 +110,14 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun startLoading() {
+
         val handler = Handler(Looper.getMainLooper())
         handler.postDelayed({
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
         }, 2800)
+
+
     }
 }

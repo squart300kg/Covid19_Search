@@ -13,8 +13,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import kotlinx.android.synthetic.main.activity_main.*
@@ -44,12 +45,16 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     private var address: String? = null
     private var distance: Double? = null
 
-    // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것
-    // TODO 2. 프로가드 적용할 것
+    // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것 - 성공
     // TODO 3. 처음 실행시, 위치퍼미션 설정 안한상태여서 터짐 - 성공
-    // TODO 4. 스플래시 로딩시간이 0.1초라면 API로드가 안된 상황일텐데 이땐 어떻게 될지 테스트
+    // TODO 4. 스플래시 로딩시간이 0.1초라면 API로드가 안된 상황일텐데 이땐 어떻게 될지 테스트 - 이상 무 - 성공
     // TODO 5. 콜백메소드 정리하기 - 성공
     // TODO 6. 현재위치 추출할 것 - 성공
+    // TODO 9. 광고넣기 - 성공
+
+    // TODO 2. 프로가드 적용할 것
+    // TODO 7. 아이콘모양 정할 것 - 성공
+    // TODO 8. 스플래시이미지 정할 것
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,7 +88,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
             // 2. 이미 퍼미션을 가지고 있다면 위치 값을 가져올 수 있음
             // ( 안드로이드 6.0 이하 버전은 런타임 퍼미션이 필요없기 때문에 이미 허용된 걸로 인식합니다.)
-            loadingMapView()
+            loadingMapViewAndADView()
 
         } else {
 
@@ -98,7 +103,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
             override fun onPermissionGranted() {
                 Toast.makeText(this@MainActivity, "Permission Granted", Toast.LENGTH_SHORT).show()
 
-                loadingMapView()
+                loadingMapViewAndADView()
 
             }
 
@@ -118,7 +123,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
     }
 
-    private fun loadingMapView() {
+    private fun loadingMapViewAndADView() {
 
         // 맵뷰를 띄운다.
         mapView = MapView(this)
@@ -165,6 +170,11 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
             }
 
         } catch (e: JSONException) { e.printStackTrace() }
+
+        // ADSView를 초기화한다
+        MobileAds.initialize(this)
+        val adRequest = AdRequest.Builder().build()
+        adView!!.loadAd(adRequest)
 
     }
 
@@ -226,9 +236,9 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         val mapPointGeo = currentLocation!!.mapPointGeoCoord
         latitude = mapPointGeo.latitude
         longtitude = mapPointGeo.longitude
-        Log.i("$TAG 현재위치", "위도 : $latitude, 경도 : $longtitude")
-        Toast.makeText(this, "위도 : $latitude, 경도 : $longtitude", Toast.LENGTH_LONG)
-            .show()
+//        Log.i("$TAG 현재위치", "위도 : $latitude, 경도 : $longtitude")
+//        Toast.makeText(this, "위도 : $latitude, 경도 : $longtitude", Toast.LENGTH_LONG)
+//            .show()
 
     }
 
