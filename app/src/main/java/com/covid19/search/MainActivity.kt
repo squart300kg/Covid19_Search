@@ -6,16 +6,15 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.gson.JsonParser
 import kotlinx.android.synthetic.main.activity_main.*
 import net.daum.mf.map.api.MapPOIItem
 import net.daum.mf.map.api.MapPoint
@@ -23,11 +22,9 @@ import net.daum.mf.map.api.MapView
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 
 
-class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResultListener, MapView.CurrentLocationEventListener {
+class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResultListener, MapView.CurrentLocationEventListener, MapView.POIItemEventListener {
 
     private val TAG = "MainActivity"
     private val GPS_ENABLE_REQUEST_CODE = 2001
@@ -48,6 +45,8 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
     // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것
     // TODO 2. 프로가드 적용할 것
+    // TODO 3. 처음 실행시, 위치퍼미션 설정 안한상태여서 터짐
+    // TODO 4. 스플래시 로딩시간이 0.1초라면 API로드가 안된 상황일텐데 이땐 어떻게 될지 테스트
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,14 +54,19 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         setContentView(R.layout.activity_main)
 
         if (!checkLocationServicesStatus()) {
+            Log.i(TAG, "1")
             showDialogForLocationServiceSetting()
         } else {
+            Log.i(TAG, "2")
             checkRunTimePermission()
         }
 
         mapView = MapView(this)
         mapView.setOpenAPIKeyAuthenticationResultListener(this)
         mapView.currentLocationTrackingMode = MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading
+        mapView.setZoomLevel(11, true)
+        mapView.setCalloutBalloonAdapter(CustomCalloutBalloonAdapter(this))
+        mapView.setPOIItemEventListener(this)
         map_view.addView(mapView)
         //그렇다면 이제 다음에 무엇을 해야하지? 일단 현재 위치가 지도에 뜨는것은 확인했다. 다음에 할 것은
         // 현재 나의 위치에 따라서 지도 중심점이 움직이도록 설정하는 것이다. - 성공!
@@ -80,43 +84,17 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         //    하지만 단점이 있다. 데이터를 추가적으로 넣을 시, 한번에 다 가져오고 갱신해야만 한다.
         //    하지만 아니면 키값에 인덱싱을 줘서 한다면?
         // 2. sqllite를 이용해 가져온다.
-        //
 
-        val marker1 = MapPOIItem()
-        marker1.itemName = "Default Marker"
-        marker1.tag = 0
-        marker1.mapPoint = MapPoint.mapPointWithGeoCoord(37.535482, 127.132218)
-        marker1.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker1.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker1)
-
-        val marker2 = MapPOIItem()
-        marker2.itemName = "Default Marker"
-        marker2.tag = 0
-        marker2.mapPoint = MapPoint.mapPointWithGeoCoord(37.535386, 127.132655)
-        marker2.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker2.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker2)
-
-        val marker3 = MapPOIItem()
-        marker3.itemName = "Default Marker"
-        marker3.tag = 0
-        marker3.mapPoint = MapPoint.mapPointWithGeoCoord(37.536015, 127.132571)
-        marker3.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker3.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker3)
-
-        val marker4 = MapPOIItem()
-        marker4.itemName = "Default Marker"
-        marker4.tag = 0
-        marker4.mapPoint = MapPoint.mapPointWithGeoCoord(37.536303, 127.131634)
-        marker4.markerType = MapPOIItem.MarkerType.BluePin // 기본으로 제공하는 BluePin 마커 모양.
-        marker4.selectedMarkerType =
-            MapPOIItem.MarkerType.RedPin // 마커를 클릭했을때, 기본으로 제공하는 RedPin 마커 모양.
-        mapView.addPOIItem(marker4)
+        // 이제 처음 시작할 때 zoom out한 상태로 시작해야한다.
+        // 그렇다면 이제 무엇을 해야할까? 간단하다. 해당 위치로 사용자들이 찾아갈 수 있도록 하면 된다.
+        // 방법은 ? 걸어가는 법, 네이게이션타고가는 법
+        // 그러기 위해 구현해야할 스텝은?
+        // 해당 병원을 눌렀을 때 하단에 안내창이 나와야한다
+        // 아니면 폴리라인을 그릴 필요가 있나? 카카오맵을 연동하면 된다.
+        // 0. 일단 클릭하면 해당 정보 내용이 팝업되도록 한다.
+        // 1. 카카오맵으로 이동시켜준다. (여기엔 네비게이션과 길 찾아가는 기능 다 있다)
+        // 2. 길을 찾아가는 경로만 폴리라인으로 그려주고 차타고 가는 것은 카카오맵으로 이동시킨다.
+        // 3. 그 외 카카오맵api를 보며 재료를 쌓아보
 
         val prefs: SharedPreferences = getSharedPreferences("COVID19INFO_LIST", Context.MODE_PRIVATE)
         val pref_result = prefs.getString("covid19info_list", null)
@@ -126,9 +104,8 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         try {
 
             var jsonArray = JSONArray(pref_result)
-//            var marker = arrayListOf<MapPOIItem>(jsonArray.length())
             var markerList = ArrayList<MapPOIItem>()
-//            var marker[3] = MapPOIItem()
+
             for (i in 0 until jsonArray.length()) {
                 var obj = jsonArray.getJSONObject(i)
                 Log.i("jsonTest[$i]", obj.get("centerName").toString())
@@ -140,14 +117,14 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
                 Log.i("jsonTest[$i]", obj.get("org").toString())
                 Log.i("jsonTest[$i]", obj.get("sido").toString())
                 Log.i("jsonTest[$i]", obj.get("sigungu").toString())
-//                Log.i("jsonTest[$i]", obj.get("zipCode").toString())
 
                 var marker = MapPOIItem()
                 marker.itemName = obj.get("centerName").toString()
-                marker.tag = 0 // TODO 추후 무슨뜻인지 알아낼
-                marker.mapPoint = MapPoint.mapPointWithGeoCoord(obj.get("lat").toString().toDouble(), obj.get("lng").toString().toDouble())
-                marker.markerType = MapPOIItem.MarkerType.BluePin
-                marker.selectedMarkerType = MapPOIItem.MarkerType.RedPin
+                marker.tag = 0 // TODO 추후 무슨뜻인지 알아낼것
+                marker.mapPoint = MapPoint.mapPointWithGeoCoord(obj.get("lng").toString().toDouble(), obj.get("lat").toString().toDouble())
+                marker.markerType = MapPOIItem.MarkerType.BluePin // 기존 마커 색깔
+                marker.selectedMarkerType = MapPOIItem.MarkerType.RedPin // 선택된 마커 색깔
+                marker.userObject = obj
                 markerList.add(marker)
 
                 mapView.addPOIItem(markerList[i])
@@ -157,16 +134,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
             e.printStackTrace()
         }
 
-
-
-
     }
-
-    // 다음과 같이 자료구조를 재정리하는 메소드
-    // string(HashMap(), HashMap(), HashMap() ... ) => List(HashMap(), HashMap(), HashMap(), ...)
-    private fun stringToWords(s: String) = s.trim().splitToSequence('[')
-        .filter() {it.isNotEmpty() }
-        .toList()
 
     private fun checkRunTimePermission() {
         //런타임 퍼미션 처리
@@ -250,25 +218,6 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         }
     }
 
-//    private fun tedPermission() {
-//        val permissionListener = object : PermissionListener {
-//            override fun onPermissionGranted() {}
-//            override fun onPermissionDenied(deniedPermissions: ArrayList<String>?) {
-//                finish()
-//            }
-//        }
-//
-//        TedPermission.with(this)
-//            .setPermissionListener(permissionListener)
-//            .setRationaleMessage("서비스 사용을 위해서 몇가지 권한이 필요합니다.")
-//            .setDeniedMessage("[설정] > [권한] 에서 권한을 설정할 수 있습니다.")
-//            .setPermissions(
-//                Manifest.permission.ACCESS_FINE_LOCATION,
-//                Manifest.permission.ACCESS_COARSE_LOCATION
-//            )
-//            .check()
-//    }
-
     //	/////////////////////////////////////////////////////////////////////////////////////////////////
     // net.daum.mf.map.api.MapView.OpenAPIKeyAuthenticationResultListener
     override fun onDaumMapOpenAPIKeyAuthenticationResult(mapView: MapView?, resultCode: Int, resultMessage: String?) {
@@ -337,6 +286,49 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
                 }
             }
         }
+    }
+//
+//    override fun onClickBallooon() {
+//        // TODO 카카오맵 실행하기
+//        Log.i(TAG ,"onClickBalloon")
+//
+//        // TODO 실행되면 R.string에 저장하기
+//        val intent = packageManager.getLaunchIntentForPackage("net.daum.android.amp/com.kakao.map.main.view.IntroActivity")
+//        startActivity(intent)
+//    }
+
+    override fun onCalloutBalloonOfPOIItemTouched(mapView: MapView?, poiItem: MapPOIItem?) {
+//        Log.i("onPOIItemSelected2", poiItem!!.itemName)
+    }
+
+    override fun onCalloutBalloonOfPOIItemTouched(
+        mapView: MapView?,
+        poiItem: MapPOIItem?,
+        p2: MapPOIItem.CalloutBalloonButtonType?
+    ) {
+
+        var jsonObject = poiItem!!.userObject as JSONObject
+
+        Log.i("onPOIItemSelected", jsonObject!!.get("centerName").toString())
+        Log.i("onPOIItemSelected", jsonObject!!.get("address").toString())
+
+        var lat = jsonObject!!.get("lat")
+        var lng = jsonObject!!.get("lng")
+
+        // TODO 현재위치 위도 경도 뽑아낼 것
+        val URL = "kakaomap://route?sp=37.537229,127.005515&ep=$lng,$lat&by=CAR" // 출발점부터 도착점까지의 길찾기 (자동차)
+
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL))
+        startActivity(intent)
+    }
+
+    override fun onDraggablePOIItemMoved(p0: MapView?, p1: MapPOIItem?, p2: MapPoint?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onPOIItemSelected(mapView: MapView?, poiItem: MapPOIItem?) {
+
+        Log.i("onPOIItemSelected", poiItem!!.itemName)
     }
 
 }
