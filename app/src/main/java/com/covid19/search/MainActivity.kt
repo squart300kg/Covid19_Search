@@ -48,7 +48,9 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     // TODO 2. 프로가드 적용할 것
     // TODO 3. 처음 실행시, 위치퍼미션 설정 안한상태여서 터짐 - 성공
     // TODO 4. 스플래시 로딩시간이 0.1초라면 API로드가 안된 상황일텐데 이땐 어떻게 될지 테스트
-    // TODO 5. 콜백메소드 정리하기
+    // TODO 5. 콜백메소드 정리하기 - 성공
+    // TODO 6. 현재위치 추출할 것 - 성공
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -124,6 +126,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         mapView.currentLocationTrackingMode = MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading
         mapView.setZoomLevel(11, true)
         mapView.setCalloutBalloonAdapter(CustomCalloutBalloonAdapter(this))
+        mapView.setCurrentLocationEventListener(this)
         mapView.setPOIItemEventListener(this)
         map_view.addView(mapView)
 
@@ -221,8 +224,10 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     override fun onCurrentLocationUpdate(mapView: MapView?, currentLocation: MapPoint?, float: Float) {
 
         val mapPointGeo = currentLocation!!.mapPointGeoCoord
-        Log.i("$TAG 현재위치", "위도 : $mapPointGeo.latitude, 경도 : $mapPointGeo.longitude")
-        Toast.makeText(this, "위도 : $mapPointGeo.latitude, 경도 : $mapPointGeo.longitude", Toast.LENGTH_LONG)
+        latitude = mapPointGeo.latitude
+        longtitude = mapPointGeo.longitude
+        Log.i("$TAG 현재위치", "위도 : $latitude, 경도 : $longtitude")
+        Toast.makeText(this, "위도 : $latitude, 경도 : $longtitude", Toast.LENGTH_LONG)
             .show()
 
     }
@@ -247,6 +252,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         p2: MapPOIItem.CalloutBalloonButtonType?
     ) {
 
+        // 목적지의 위도와 경도를 추출
         var jsonObject = poiItem!!.userObject as JSONObject
 
         Log.i("onPOIItemSelected", jsonObject!!.get("centerName").toString())
@@ -255,8 +261,7 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
         var lat = jsonObject!!.get("lat")
         var lng = jsonObject!!.get("lng")
 
-        // TODO 현재위치 위도 경도 뽑아낼 것
-        val URL = "kakaomap://route?sp=37.537229,127.005515&ep=$lng,$lat&by=CAR" // 출발점부터 도착점까지의 길찾기 (자동차)
+        val URL = "kakaomap://route?sp=$latitude,$longtitude&ep=$lng,$lat&by=CAR" // 출발점부터 도착점까지의 길찾기 (자동차)
 
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL))
         startActivity(intent)
