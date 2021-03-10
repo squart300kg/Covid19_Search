@@ -32,6 +32,11 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-6562154197787185~3425048964" />
+
+<!--        뭐하는 녀석이지? 전면광고 관련요소인가?-->
+        <meta-data
+            android:name="com.google.android.gms.ads.AD_MANAGER_APP"
+            android:value="true"/>
     </application>
 
 </manifest>

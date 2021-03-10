@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">코로나 예방접종</string>
     <string name="admob_app_id">ca-app-pub-6562154197787185~3425048964</string>
+
     <string name="banner_ad_unit_id">ca-app-pub-6562154197787185/7416264862</string>
     <string name="banner_ad_unit_id_for_test">ca-app-pub-3940256099942544/6300978111</string>
+
+    <string name="all_ad_unit_id">ca-app-pub-6562154197787185/7416264862</string>
+    <string name="all_ad_unit_id_for_test">ca-app-pub-3940256099942544/1033173712</string>
 </resources>

@@ -44,7 +44,6 @@
             android:id="@+id/balloon_search_load"
             android:gravity="center"
             android:padding="5dp"
-            android:background="@drawable/arrow_background"
             android:layout_weight="20"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -54,14 +53,6 @@
                 android:layout_height="50dp"
                 android:layout_width="50dp"
                 android:src="@drawable/arrow" />
-            <TextView
-                android:layout_gravity="center"
-                android:textColor="#000"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textStyle="bold"
-                android:textSize="15dp"
-                android:text="길찾기"/>
 
         </LinearLayout>
 

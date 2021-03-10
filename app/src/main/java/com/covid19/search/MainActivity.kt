@@ -1,14 +1,17 @@
 package com.covid19.search
 
 import android.Manifest
+import android.app.ProgressDialog.show
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -16,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import kotlinx.android.synthetic.main.activity_main.*
@@ -25,10 +30,15 @@ import net.daum.mf.map.api.MapView
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
 import java.util.ArrayList
 
 
-class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResultListener, MapView.CurrentLocationEventListener, MapView.POIItemEventListener {
+class MainActivity : AppCompatActivity(),
+    MapView.OpenAPIKeyAuthenticationResultListener,
+    MapView.CurrentLocationEventListener,
+    MapView.POIItemEventListener {
 
     private val TAG = "MainActivity"
     private val GPS_ENABLE_REQUEST_CODE = 2001
@@ -41,9 +51,9 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
     private lateinit var locationManager: LocationManager
     private var latitude: Double? = null
     private var longtitude: Double? = null
-    private var currentLocation: String? = null
-    private var address: String? = null
-    private var distance: Double? = null
+
+//    private lateinit var mInterstitialAd: InterstitialAd
+
 
     // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것 - 성공
     // TODO 3. 처음 실행시, 위치퍼미션 설정 안한상태여서 터짐 - 성공
@@ -54,13 +64,16 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
     // TODO 2. 프로가드 적용할 것 - 성공
     // TODO 7. 아이콘모양 정할 것 - 성공
-    // TODO 8. 스플래시이미지 정할 것
-    // TODO 9. 말풍선 이미지 좀 더 예쁘게 바꿔보기
+    // TODO 8. 스플래시이미지 정할 것 - 성공
+    // TODO 9. 말풍선 이미지 좀 더 예쁘게 바꿔보기 - 성공
+    // TODO 10. 전면광고 넣기!
+
 
     // TODO 배포직전!!!!!!
     // TODO 1. JKS파일 정보 메모하기,
     // TODO 2. 키해시값 새로 추출하기
     // TODO 3. 광고ID바꾸기,
+    // TODO 4. covid19 API키 바꾸기
 
 
 
@@ -80,7 +93,24 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
         }
 
+//        getKeyHash()
     }
+
+//    private fun getKeyHash() {
+//        try {
+//            val info: PackageInfo =
+//                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+//            for (signature in info.signatures) {
+//                val md: MessageDigest = MessageDigest.getInstance("SHA")
+//                md.update(signature.toByteArray())
+//                Log.d("키해시는 :", Base64.encodeToString(md.digest(), Base64.DEFAULT))
+//            }
+//        } catch (e: PackageManager.NameNotFoundException) {
+//            e.printStackTrace()
+//        } catch (e: NoSuchAlgorithmException) {
+//            e.printStackTrace()
+//        }
+//    }
 
     private fun checkRunTimePermission() {
 
@@ -180,9 +210,15 @@ class MainActivity : AppCompatActivity(), MapView.OpenAPIKeyAuthenticationResult
 
         // ADSView를 초기화한다
         MobileAds.initialize(this)
+
+        // 배너광고를 초기화한다.
         val adRequest = AdRequest.Builder().build()
         adView!!.loadAd(adRequest)
 
+        // 전면 광고를 초기화한다.
+//        InterstitialAd.load(this, R.string.all_ad_unit_id_for_test.toString(), AdRequest.Builder().build(), InterstitialAdLoadCallback())
+        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", AdRequest.Builder().build(), InterstitialAdLoadCallback())
+//        InterstitialAd.
     }
 
     private fun showDialogForLocationServiceSetting() {

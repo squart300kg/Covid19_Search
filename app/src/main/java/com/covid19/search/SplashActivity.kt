@@ -27,7 +27,6 @@ class SplashActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
 
-
         Glide.with(this).load(R.raw.splash_image_large).into(DrawableImageViewTarget(splash_image))
 
         getCovidInfo()
