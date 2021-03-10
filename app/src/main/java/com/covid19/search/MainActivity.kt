@@ -17,8 +17,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.gun0912.tedpermission.PermissionListener
@@ -47,6 +46,7 @@ class MainActivity : AppCompatActivity(),
     private val REQUIRED_PERMISSIONS = arrayOf(
                                         Manifest.permission.ACCESS_FINE_LOCATION)
     private lateinit var mapView: MapView
+    private var mInterstitialAd: InterstitialAd? = null
 
     private lateinit var locationManager: LocationManager
     private var latitude: Double? = null
@@ -72,8 +72,9 @@ class MainActivity : AppCompatActivity(),
     // TODO 배포직전!!!!!!
     // TODO 1. JKS파일 정보 메모하기,
     // TODO 2. 키해시값 새로 추출하기
-    // TODO 3. 광고ID바꾸기,
-    // TODO 4. covid19 API키 바꾸기
+    // TODO 3. 광고ID바꾸기(배너),
+    // TODO 4. 광고ID바꾸기(전면),
+    // TODO 5. covid19 API키 바꾸기
 
 
 
@@ -94,6 +95,21 @@ class MainActivity : AppCompatActivity(),
         }
 
 //        getKeyHash()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+
+        // 길찾기를 다 이용한 후에 광고를 띄워준다.
+        if (mInterstitialAd != null) {
+
+            mInterstitialAd?.show(this)
+
+        } else {
+
+            Log.d(TAG, "The interstitial ad wasn't ready yet.")
+
+        }
     }
 
 //    private fun getKeyHash() {
@@ -216,9 +232,32 @@ class MainActivity : AppCompatActivity(),
         adView!!.loadAd(adRequest)
 
         // 전면 광고를 초기화한다.
-//        InterstitialAd.load(this, R.string.all_ad_unit_id_for_test.toString(), AdRequest.Builder().build(), InterstitialAdLoadCallback())
-        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", AdRequest.Builder().build(), InterstitialAdLoadCallback())
-//        InterstitialAd.
+        InterstitialAd.load(this,"ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d(TAG, adError?.message)
+                mInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                Log.d(TAG, "Ad was loaded.")
+                mInterstitialAd = interstitialAd
+            }
+        })
+        mInterstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                Log.d(TAG, "Ad was dismissed.")
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                Log.d(TAG, "Ad failed to show.")
+            }
+
+            override fun onAdShowedFullScreenContent() {
+                Log.d(TAG, "Ad showed fullscreen content.")
+                mInterstitialAd = null;
+            }
+        }
+
     }
 
     private fun showDialogForLocationServiceSetting() {
