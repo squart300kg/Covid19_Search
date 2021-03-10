@@ -9,7 +9,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
 private const val BASE_URL = "https://api.odcloud.kr/api/"
-//private const val BASE_URL = "https://api.odcloud.kr/api/15077586/v1"
 
 internal interface CovidAPIService {
 

@@ -1,3 +1,4 @@
 package com.covid19.search
 
-data class Covid19InfoRequest(val page: Int, val perPage: Int)
+data class Covid19InfoRequest(private val page: Int,
+                              private val perPage: Int)

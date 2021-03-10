@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true" >
         <activity
             android:name=".SplashActivity"
             android:screenOrientation = "portrait">
@@ -23,19 +23,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-<!--            <intent-filter>-->
-<!--                <action android:name = "android.intent.action.VIEW"/>-->
-<!--                <category android:name = "android.intent.category.DEFAULT"/>-->
-<!--                <categoty android:name = "android.intent.category.BROWSABLE"/>-->
-
-<!--                <data android:host="action" android:scheme="kakaomap://open"/>-->
-<!--            </intent-filter>-->
         </activity>
         <activity android:name=".MainActivity"/>
 
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="b95c2562da6323c06a0b63fe1db8469e" />
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-6562154197787185~3425048964" />
     </application>
 
 </manifest>
