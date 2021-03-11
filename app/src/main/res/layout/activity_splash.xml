@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFF"
     tools:context=".SplashActivity">
 
     <ImageView
@@ -21,7 +22,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="코로나 예방접종 찾기"
+        android:text="코로나 예방접종 진료소 찾기"
         android:textColor="#000"
         android:textSize="30dp"
         android:textStyle="bold"
