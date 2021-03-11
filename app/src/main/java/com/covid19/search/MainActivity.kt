@@ -1,7 +1,6 @@
 package com.covid19.search
 
 import android.Manifest
-import android.app.ProgressDialog.show
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -17,8 +16,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.gun0912.tedpermission.PermissionListener
@@ -32,7 +30,6 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.util.ArrayList
 
 
 class MainActivity : AppCompatActivity(),
@@ -43,17 +40,25 @@ class MainActivity : AppCompatActivity(),
     private val TAG = "MainActivity"
     private val GPS_ENABLE_REQUEST_CODE = 2001
     private val PERMISSIONS_REQUEST_CODE = 100
+
     private val COVID19INFO_LIST = "0"
+    private val ALL_AD_COUNT = "1"
+    private var MAX_AD_COUNT = 5
+
     private val REQUIRED_PERMISSIONS = arrayOf(
                                         Manifest.permission.ACCESS_FINE_LOCATION)
+    private val ALL_AD_BANNER_TEST = "ca-app-pub-6562154197787185/7416264862"
+    private val ALL_AD_BANNER = "ca-app-pub-3940256099942544/1033173712"
+
     private lateinit var mapView: MapView
+    private var mInterstitialAd: InterstitialAd? = null
 
     private lateinit var locationManager: LocationManager
     private var latitude: Double? = null
     private var longtitude: Double? = null
 
-//    private lateinit var mInterstitialAd: InterstitialAd
-
+    // 맥북 디버그용 키해시 : S4hP67qeLpxOpFdOvSnjeDaJawc=
+    //
 
     // TODO 1. 안드로이드 최저버전 26으로 설정함 좀 더 낮출 수 없는지 알아볼 것 - 성공
     // TODO 3. 처음 실행시, 위치퍼미션 설정 안한상태여서 터짐 - 성공
@@ -66,16 +71,27 @@ class MainActivity : AppCompatActivity(),
     // TODO 7. 아이콘모양 정할 것 - 성공
     // TODO 8. 스플래시이미지 정할 것 - 성공
     // TODO 9. 말풍선 이미지 좀 더 예쁘게 바꿔보기 - 성공
-    // TODO 10. 전면광고 넣기!
+    // TODO 10. 전면광고 넣기! - 성공
+    // TODO 11. 광고를 길찾기 전에 넣기, 5번에 한 번씩 광고를 띄워준다. sharedpreference를 이용 - 성공
 
 
     // TODO 배포직전!!!!!!
     // TODO 1. JKS파일 정보 메모하기,
     // TODO 2. 키해시값 새로 추출하기
-    // TODO 3. 광고ID바꾸기,
-    // TODO 4. covid19 API키 바꾸기
+    // TODO 3. 광고ID바꾸기(배너), - 성공
+    // TODO 4. 광고ID바꾸기(전면), - 성공
+    // TODO 5. covid19 API키 바꾸기 - 성공
+    // TODO 6. splash_activity에서 앱을 실행할 때마다 api정보를 계속 내부저장소에 저장하는가? 확인할 것
+    // TODO 7. jks파일로 apk재추출 테스트해볼 것 - 성공
+    // TODO 8. 스플래시이미지 적용할 것
+    // 확인하고자 하는 것 : 하나의 키파일로 갱신되는 apk파일을 계속 만들 수 있는가?
+    // 실험1. 일단 release배너 api키를 넣고 apk 생성 : 광고 안뜸
+    // 실험2. test api키를 넣고 apk를 재생성해본다.   : 광고 뜸
+    // 결과 : 하나의 jks파일을 가지고 apk를 계속 갱신할 수 있다
 
-
+    // TODO 추후 바꿀 것.
+    // TODO 1. api수가 늘어나면 그에 맞춘 페이징 처리 및 로딩 처리
+    // TODO 2.
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,24 +109,25 @@ class MainActivity : AppCompatActivity(),
 
         }
 
-//        getKeyHash()
+        getKeyHash()
+
     }
 
-//    private fun getKeyHash() {
-//        try {
-//            val info: PackageInfo =
-//                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
-//            for (signature in info.signatures) {
-//                val md: MessageDigest = MessageDigest.getInstance("SHA")
-//                md.update(signature.toByteArray())
-//                Log.d("키해시는 :", Base64.encodeToString(md.digest(), Base64.DEFAULT))
-//            }
-//        } catch (e: PackageManager.NameNotFoundException) {
-//            e.printStackTrace()
-//        } catch (e: NoSuchAlgorithmException) {
-//            e.printStackTrace()
-//        }
-//    }
+    private fun getKeyHash() {
+        try {
+            val info: PackageInfo =
+                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNATURES)
+            for (signature in info.signatures) {
+                val md: MessageDigest = MessageDigest.getInstance("SHA")
+                md.update(signature.toByteArray())
+                Log.d("키해시는 :", Base64.encodeToString(md.digest(), Base64.DEFAULT))
+            }
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.printStackTrace()
+        } catch (e: NoSuchAlgorithmException) {
+            e.printStackTrace()
+        }
+    }
 
     private fun checkRunTimePermission() {
 
@@ -214,11 +231,59 @@ class MainActivity : AppCompatActivity(),
         // 배너광고를 초기화한다.
         val adRequest = AdRequest.Builder().build()
         adView!!.loadAd(adRequest)
+        adView.adListener = object : AdListener() {
+            override fun onAdLoaded() {
 
-        // 전면 광고를 초기화한다.
-//        InterstitialAd.load(this, R.string.all_ad_unit_id_for_test.toString(), AdRequest.Builder().build(), InterstitialAdLoadCallback())
-        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", AdRequest.Builder().build(), InterstitialAdLoadCallback())
-//        InterstitialAd.
+                // Code to be executed when an ad finishes loading.
+
+                // 광고가 문제 없이 로드시 출력됩니다.
+                Log.d("@@@", "onAdLoaded")
+            }
+
+            override fun onAdFailedToLoad(errorCode: Int) {
+
+                // Code to be executed when an ad request fails.
+
+                // 광고 로드에 문제가 있을시 출력됩니다.
+                Log.d("@@@", "onAdFailedToLoad $errorCode")
+            }
+
+            override fun onAdOpened() { }
+
+            override fun onAdClicked() { }
+
+            override fun onAdLeftApplication() { }
+
+            override fun onAdClosed() { }
+        }
+
+//        // 전면 광고를 초기화한다.
+//        InterstitialAd.load(this, ALL_AD_BANNER, adRequest, object : InterstitialAdLoadCallback() {
+//            override fun onAdFailedToLoad(adError: LoadAdError) {
+//                Log.d(TAG, adError?.message)
+//                mInterstitialAd = null
+//            }
+//
+//            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+//                Log.d(TAG, "Ad was loaded.")
+//                mInterstitialAd = interstitialAd
+//            }
+//        })
+//        mInterstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+//            override fun onAdDismissedFullScreenContent() {
+//                Log.d(TAG, "Ad was dismissed.")
+//            }
+//
+//            override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+//                Log.d(TAG, "Ad failed to show.")
+//            }
+//
+//            override fun onAdShowedFullScreenContent() {
+//                Log.d(TAG, "Ad showed fullscreen content.")
+//                mInterstitialAd = null;
+//            }
+//        }
+
     }
 
     private fun showDialogForLocationServiceSetting() {
@@ -299,11 +364,92 @@ class MainActivity : AppCompatActivity(),
 //        Log.i("onPOIItemSelected2", poiItem!!.itemName)
     }
 
+    // 길찾기를 클릭
     override fun onCalloutBalloonOfPOIItemTouched(
         mapView: MapView?,
         poiItem: MapPOIItem?,
         p2: MapPOIItem.CalloutBalloonButtonType?
     ) {
+
+        // 개요
+        // 길찾기 5번마다 한 번씩 광고를 띄워준다. 길찾기를 위한 카운트는 SharedPreference를 이용한다.
+        val prefs: SharedPreferences = getSharedPreferences(ALL_AD_COUNT, Context.MODE_PRIVATE)
+
+        // 1. 우선 광고를 몇 번 시청했는지를 조회한다.
+        var ad_watch_count = prefs.getInt(ALL_AD_COUNT, 0)
+
+        Log.i("ad_watch_count", ad_watch_count.toString())
+
+        // 2. 광고 시청 카운트가 0이라면 광고를 띄워준다.
+        if (ad_watch_count == 0) {
+            // 전면 광고를 초기화한다.
+            InterstitialAd.load(this, ALL_AD_BANNER, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.d(TAG, adError?.message)
+                    mInterstitialAd = null
+                }
+
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    Log.d(TAG, "Ad was loaded.")
+                    mInterstitialAd = interstitialAd
+                    mInterstitialAd?.show(this@MainActivity)
+
+                    // 1. 광고를 성공적으로 띄워줬다면, 광고 시청 카운트를 1 증가시킨다.
+                    ad_watch_count += 1
+
+                    //2. 광고 시청 카운트를 저장시킨다.
+                    prefs.edit().putInt(ALL_AD_COUNT, ad_watch_count).apply()
+
+                    //3. 전면광고 상태 콜백 메소드를 정의한다.
+                    requireNotNull(mInterstitialAd).fullScreenContentCallback = object: FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            Log.d(TAG, "Ad was dismissed.")
+
+                            goToKakaoMap(poiItem)
+
+                        }
+
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                            Log.d(TAG, "Ad failed to show.")
+                        }
+
+                        override fun onAdShowedFullScreenContent() {
+                            Log.d(TAG, "Ad showed fullscreen content.")
+                            mInterstitialAd = null;
+                        }
+                    }
+                }
+            })
+
+        } else { // 광고를 한 번이라도 시청했다면,
+
+            //1. 카카오맵으로 이동시켜준다.
+            goToKakaoMap(poiItem)
+
+            // 2. 광고 카운트를 1 증가시켜준다.
+            ad_watch_count += 1
+
+            // 3. 광고 카운트가 5보다 크다면 0으로 해준다.
+            if (ad_watch_count > MAX_AD_COUNT) ad_watch_count = 0
+
+            // 3. 광고 카운트를 저장한다.
+            prefs.edit().putInt(ALL_AD_COUNT, ad_watch_count).apply()
+
+        }
+
+    }
+
+
+    override fun onDraggablePOIItemMoved(p0: MapView?, p1: MapPOIItem?, p2: MapPoint?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onPOIItemSelected(mapView: MapView?, poiItem: MapPOIItem?) {
+
+        Log.i("onPOIItemSelected", poiItem!!.itemName)
+    }
+
+    private fun goToKakaoMap(poiItem: MapPOIItem?) {
 
         // 목적지의 위도와 경도를 추출
         var jsonObject = poiItem!!.userObject as JSONObject
@@ -315,18 +461,9 @@ class MainActivity : AppCompatActivity(),
         var lng = jsonObject!!.get("lng")
 
         val URL = "kakaomap://route?sp=$latitude,$longtitude&ep=$lng,$lat&by=CAR" // 출발점부터 도착점까지의 길찾기 (자동차)
-
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL))
         startActivity(intent)
-    }
 
-    override fun onDraggablePOIItemMoved(p0: MapView?, p1: MapPOIItem?, p2: MapPoint?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onPOIItemSelected(mapView: MapView?, poiItem: MapPOIItem?) {
-
-        Log.i("onPOIItemSelected", poiItem!!.itemName)
     }
 
 }

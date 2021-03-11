@@ -10,7 +10,7 @@
         android:id="@+id/splash_image"
         android:layout_width="300dp"
         android:layout_height="300dp"
-        android:layout_marginTop="132dp"
+        android:layout_marginTop="212dp"
         android:background="#FFFF"
         android:src="@drawable/covid_icon"
         app:layout_constraintEnd_toEndOf="parent"
@@ -19,18 +19,17 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="코로나 예방접종"
+        android:text="코로나 예방접종 찾기"
         android:textColor="#000"
-        android:textSize="50dp"
+        android:textSize="30dp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/splash_image"
-        app:layout_constraintVertical_bias="0.061" />
+        app:layout_constraintVertical_bias="0.212" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
