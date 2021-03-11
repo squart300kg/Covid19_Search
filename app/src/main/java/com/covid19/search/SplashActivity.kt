@@ -15,8 +15,13 @@ import io.reactivex.disposables.Disposable
 import kotlinx.android.synthetic.main.activity_splash.*
 import org.json.JSONObject
 import retrofit2.adapter.rxjava2.Result
+import java.net.URLDecoder
+import java.net.URLEncoder
 
 class SplashActivity : AppCompatActivity() {
+
+    private val COVID_API_KEY = URLDecoder.decode("5mlJGQ%2BNaEgk%2BInk45j4lykrpjBX2W7F0gAXiTcTniX5P2ehcDqTAng4nWja7%2BHWuzh4gezDef5AZUMsRN5K%2FA%3D%3D", "UTF-8")
+    private val COVID_TEST_API_KEY = "data-portal-test-key"
 
     private val COVID19INFO_LIST = "0"
     private val covidAPIService by lazy {
@@ -36,8 +41,9 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun getCovidInfo() {
+
         val apiCall: Disposable = covidAPIService
-            .getCovid19InfoList(1,100, isAll = false)
+            .getCovid19InfoList(1,100, COVID_API_KEY, isAll = false)
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {

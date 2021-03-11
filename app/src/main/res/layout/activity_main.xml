@@ -15,15 +15,14 @@
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_width="320dp"
+        android:layout_height="50dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_gravity="center"
-        android:layout_weight="7"
         android:visibility="visible"
         app:adSize="BANNER"
-        app:adUnitId="@string/banner_ad_unit_id_for_test"
+        app:adUnitId="@string/banner_ad_unit_id"
         app:layout_constraintBottom_toBottomOf="@+id/map_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
